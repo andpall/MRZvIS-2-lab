@@ -1,0 +1,3 @@
+﻿  sd.cpp
+C:\Users\Евгений\source\repos\sd\sd\sd.cpp(14,19): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+  sd.vcxproj -> C:\Users\Евгений\source\repos\sd\Debug\sd.exe
