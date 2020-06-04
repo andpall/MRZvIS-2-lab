@@ -3,8 +3,6 @@
 #include <iomanip>
 #include <array>
 
-
-
 using namespace std;
 
 void SIMDMatrixes::set_input_elements_of_massiv()
@@ -31,6 +29,7 @@ double SIMDMatrixes::get_random_elements()
 {
     double number = (double)(rand() % 20001) / 10000 - 1;
     return number;
+
 }
 
 void SIMDMatrixes::filling_matrixs()
@@ -81,6 +80,10 @@ void SIMDMatrixes::filling_matrixs()
         for (int j = 0; j < q; j++)
             D[i][j] = new double[m];
 
+    C = new double* [p];
+    for (int i = 0; i < p; i++)
+        C[i] = new double[q];
+
     print_two_dimensional_matrixs();
     calculate_matrix_C();
 }
@@ -120,8 +123,10 @@ void SIMDMatrixes::calculate_matrix_C()
 {
     Fijk(A, B, E, p, m, q);
     Dijk(A, B, p, m, q);
+  
+    Cij(F, G, D, p, q, m);
     print_auxiliary_matrix();
-
+    print_final_matrix();
 }
 
 void SIMDMatrixes::print_auxiliary_matrix()
@@ -151,18 +156,27 @@ void SIMDMatrixes::print_auxiliary_matrix()
     }
 }
 
-
-
-//deafult task c(ij)
-double SIMDMatrixes::cij(int i, int j) {
-    double c;
-   
-    c = f_func(i, j) * (3. * G[i][j] - 2.) * G[i][j] + (d_func(i, j) + (4. * f_and_d(i, j) - 3. * d_func(i, j)) * G[i][j]) * (1. - G[i][j]);
-
-    return c;
+void SIMDMatrixes::print_final_matrix()
+{
+    cout << "Матрица C:";
+    for (int i = 0; i < p; i++) {
+        cout << endl;
+        for (int j = 0; j < q; j++) {
+            cout << setw(12) << C[i][j] << " ";
+        }
+    }
 }
 
-//deafult task f(ijk)
+void SIMDMatrixes::Cij(double*** F, double** G, double*** D, int i, int j, int k) {
+    for (int i = 0; i < p; i++)
+    {
+        for (int j = 0; j < q; j++)
+        {
+            C[i][j] = singleConjunction(i,j) * (3. * G[i][j] - 2.) * G[i][j] + (singleDisjunction(i, j) + (4. * multiplication(i, j) - 3. * singleDisjunction(i, j)) * G[i][j]) * (1. - G[i][j]);
+        }
+    }
+}
+
 void SIMDMatrixes::Fijk(double** A, double** B, double** E, int i, int j, int k) {
     for (int i = 0; i < p; i++)
     {
@@ -170,14 +184,12 @@ void SIMDMatrixes::Fijk(double** A, double** B, double** E, int i, int j, int k)
         {
             for (int k = 0; k < m; k++)
             {
-
-                F[i][j][k] = (a_to_b(A[i][k],B[k][j])) * (2. * E[0][k] - 1.) * E[0][k] + b_to_a(A, B, i, k, j) * (1. + (4. * a_to_b(A[i][k], B[k][j]) - 2.) * E[0][k]) * (1. - E[0][k]);
+                F[i][j][k] = (contraction(A[i][k],B[k][j])) * (2. * E[0][k] - 1.) * E[0][k] + uncontraction(A, B, i, k, j) * (1. + (4. * contraction(A[i][k], B[k][j]) - 2.) * E[0][k]) * (1. - E[0][k]);
             }
         }
     }
  }
 
-//deafult task d(ijk)
 void SIMDMatrixes::Dijk(double** A, double** B, int i, int j, int k) {
     for (int i = 0; i < p; i++)
     {
@@ -185,14 +197,13 @@ void SIMDMatrixes::Dijk(double** A, double** B, int i, int j, int k) {
         {
             for (int k = 0; k < m; k++)
             {
-                D[i][j][k] = a_and_b(A, B, i, k, j);
+                D[i][j][k] = conjunction_self(A[i][k], B[k][j]);
             }
         }
     }
 }
 
-//F func
-double SIMDMatrixes::f_func(int i, int j) {
+double SIMDMatrixes::singleConjunction(int i, int j) {
     double result = 1;
     for (int k = 0; k < m; k++) {
         result *= F[i][j][k];
@@ -200,9 +211,7 @@ double SIMDMatrixes::f_func(int i, int j) {
     return result;
 }
 
-
-//D func
-double SIMDMatrixes::d_func(int i, int j) {
+double SIMDMatrixes::singleDisjunction(int i, int j) {
     double result = 1;
     for (int k = 0; k < m; k++) {
         result *= 1 - D[i][j][k];
@@ -211,22 +220,16 @@ double SIMDMatrixes::d_func(int i, int j) {
     return 1 - result;
 }
 
-
-
-
-//F and D
-double SIMDMatrixes::f_and_d(int i, int j) {
+double SIMDMatrixes::multiplication(int i, int j) {
     double res, half;
-    half = (f_func(i, j) + d_func(i, j) - 1.);
+    half = (singleConjunction(i, j) + singleDisjunction(i, j) - 1.);
     if (half > 0.) res = half;
     else res = 0.;
  
     return res;
 }
 
-
-//A to B
-double SIMDMatrixes::a_to_b(int first,int second) {
+double SIMDMatrixes::contraction(int first,int second) {
     int delta = 1;
     while (min((1 - first), delta) > second)
     {
@@ -237,9 +240,7 @@ double SIMDMatrixes::a_to_b(int first,int second) {
 
 }
 
-
-//B to A
-double SIMDMatrixes::b_to_a(double** A, double** B, int i, int k, int j) {
+double SIMDMatrixes::uncontraction(double** A, double** B, int i, int k, int j) {
     double res;
     if ((1 - B[k][j]) > A[i][k]) res = (1 - B[k][j]);
     else res = A[i][k];
@@ -247,11 +248,6 @@ double SIMDMatrixes::b_to_a(double** A, double** B, int i, int k, int j) {
     return res;
 }
 
-
-//A and B
-double SIMDMatrixes::a_and_b(double** A, double** B, int i, int k, int j) {
-    double res;
-    if (A[i][k] > B[k][j]) res = A[i][k];
-    else res = B[k][j];
-    return res;
+double SIMDMatrixes::conjunction_self(int first,int second) {
+    return min(first, second);
 }

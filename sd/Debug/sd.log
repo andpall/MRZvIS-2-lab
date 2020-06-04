@@ -1,3 +1,8 @@
-﻿  sd.cpp
-C:\Users\Евгений\source\repos\sd\sd\sd.cpp(14,19): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+﻿  SIMDMatrixes.cpp
+C:\Users\Евгений\source\repos\sd\sd\SIMDMatrixes.cpp(187,57): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+C:\Users\Евгений\source\repos\sd\sd\SIMDMatrixes.cpp(187,49): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+C:\Users\Евгений\source\repos\sd\sd\SIMDMatrixes.cpp(187,165): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+C:\Users\Евгений\source\repos\sd\sd\SIMDMatrixes.cpp(187,156): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+C:\Users\Евгений\source\repos\sd\sd\SIMDMatrixes.cpp(200,62): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+C:\Users\Евгений\source\repos\sd\sd\SIMDMatrixes.cpp(200,53): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
   sd.vcxproj -> C:\Users\Евгений\source\repos\sd\Debug\sd.exe
