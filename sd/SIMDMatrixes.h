@@ -29,12 +29,24 @@ private:
 
 
     //**элементы для подсчёта**//
-    int T1;
-    int Tn;
+    int multiplicationTime = 1;
+    int additionTime = 1;
+    int subtractionTime = 1;
+    int comparisonTime = 1;
+
+    int rang;
     double Ky;
-    double Eff;
-    double Diff;
-    int Lavg;
+    double e;
+    double Lavg;
+    double Tn;
+    double T1;
+    double diff;
+
+    int numberOfMultiplications = 0;
+    int numberOfAdditions = 0;
+    int numberOfSubtractions = 0;
+    int numberOfComparisons = 0;
+    int averageTime = 0;
 
     //**результатирующая матрица**//
     double** C;
@@ -47,23 +59,23 @@ public:
         void filling_matrixs();
         void calculate_matrix_C();
         void print_two_dimensional_matrixs();
-        void print_auxiliary_matrix();
         void print_final_matrix();
 
+        void print_elements();
 
         //**Нахождение матриц F,D,C**//
-        void Fijk(double** A, double** B, double** E, int i, int j, int k);
-        void Dijk(double** A, double** B, int i, int j, int k);
-        
-        void Cij(double*** F, double** G, double*** D, int i, int j, int k);
+        void Fijk();
+        void Dijk();
+        void Cij();
 
-        //**Вычисление дополнитеьных матриц Fij и Dij
+        //**Вычисление
         double contraction(int first, int second);
         double conjunction_self(int first, int second);
-
-        double uncontraction(double** A, double** B, int i, int k, int j);
+        double uncontraction(int i, int k, int j);
         double singleConjunction(int i, int j);
         double singleDisjunction(int i, int j);
         double multiplication(int i, int j);
+
+        void print_auxiliary_matrix();
 
 };

@@ -20,8 +20,10 @@ void SIMDMatrixes::set_input_elements_of_massiv()
         if (m == 0 || p == 0 || q == 0 || process_element == 0) {
             cout << "Ошибка!Повторите ввод данных\n";
         }
-        else break;
-
+        else {      
+            filling_matrixs();
+            break;
+        }
     }
 }
 
@@ -121,12 +123,12 @@ void SIMDMatrixes::print_two_dimensional_matrixs()
 
 void SIMDMatrixes::calculate_matrix_C()
 {
-    Fijk(A, B, E, p, m, q);
-    Dijk(A, B, p, m, q);
-  
-    Cij(F, G, D, p, q, m);
+    Fijk();
+    Dijk();
+    Cij();
     print_auxiliary_matrix();
     print_final_matrix();
+
 }
 
 void SIMDMatrixes::print_auxiliary_matrix()
@@ -165,32 +167,60 @@ void SIMDMatrixes::print_final_matrix()
             cout << setw(12) << C[i][j] << " ";
         }
     }
+    print_elements();
 }
 
-void SIMDMatrixes::Cij(double*** F, double** G, double*** D, int i, int j, int k) {
+void SIMDMatrixes::print_elements()
+{
+    rang = m * p * q;
+    T1 = numberOfMultiplications * multiplicationTime + numberOfAdditions * additionTime +
+        numberOfSubtractions * subtractionTime + numberOfComparisons * comparisonTime;
+    Ky = T1 / Tn;
+    e = Ky / process_element;
+    Lavg = ceil(averageTime / rang);
+    diff = (Tn / Lavg);
+    cout << "\n\nРанг = " << rang << "\nT1 = " << T1 << "\nTn = " << Tn << "\nKy = " << Ky << "\ne = " << e << "\nLavg = " << Lavg << "\nDiff = " << diff << "\nLsum = " << averageTime;
+}
+
+void SIMDMatrixes::Cij() {
     for (int i = 0; i < p; i++)
     {
         for (int j = 0; j < q; j++)
         {
-            C[i][j] = singleConjunction(i,j) * (3. * G[i][j] - 2.) * G[i][j] + (singleDisjunction(i, j) + (4. * multiplication(i, j) - 3. * singleDisjunction(i, j)) * G[i][j]) * (1. - G[i][j]);
+            C[i][j] = singleConjunction(i,j) * (3 * G[i][j] - 2) * G[i][j] + (singleDisjunction(i, j) + (4 * multiplication(i, j) - 3 * singleDisjunction(i, j)) * G[i][j]) * (1 - G[i][j]);
+            numberOfMultiplications += 8;
+            numberOfAdditions += 3;
+            numberOfSubtractions += 2;
         }
     }
+    Tn += ceil((p * q) / process_element) * (6 * multiplicationTime + 2 * additionTime + 2 * subtractionTime + 3 * ((m - 1) * multiplicationTime + (m + 1) * subtractionTime) +
+        2 * ((m - 1) *
+            multiplicationTime) +
+        subtractionTime + additionTime +
+        2 * comparisonTime);
+    averageTime += p * q * (6 * multiplicationTime + 2 * additionTime + 2 * subtractionTime + 3 * ((m - 1) * multiplicationTime + (m + 1) * subtractionTime) + 2 * ((m - 1) * multiplicationTime) + subtractionTime + additionTime + 2 * comparisonTime);
 }
 
-void SIMDMatrixes::Fijk(double** A, double** B, double** E, int i, int j, int k) {
+void SIMDMatrixes::Fijk() {
     for (int i = 0; i < p; i++)
     {
         for (int j = 0; j < q; j++)
         {
             for (int k = 0; k < m; k++)
             {
-                F[i][j][k] = (contraction(A[i][k],B[k][j])) * (2. * E[0][k] - 1.) * E[0][k] + uncontraction(A, B, i, k, j) * (1. + (4. * contraction(A[i][k], B[k][j]) - 2.) * E[0][k]) * (1. - E[0][k]);
+                F[i][j][k] = (contraction(A[i][k], B[k][j])) * (2 * E[0][k] - 1) * E[0][k] + uncontraction(i, k, j) * (1 + (4 * contraction(A[i][k], B[k][j]) - 2) * E[0][k]) * (1 - E[0][k]);
+                numberOfMultiplications += 7;
+                numberOfAdditions += 2;
+                numberOfSubtractions += 3;
             }
         }
     }
- }
+    Tn += ceil((p * q * m) / process_element) * (7 * multiplicationTime + 2 * additionTime + 3 * subtractionTime +
+        3 * (2 * comparisonTime + subtractionTime));
+    averageTime += p * q * m * (7 * multiplicationTime + 2 * additionTime + 3 * subtractionTime + 3 * (2 * comparisonTime + subtractionTime));
+}
 
-void SIMDMatrixes::Dijk(double** A, double** B, int i, int j, int k) {
+void SIMDMatrixes::Dijk() {
     for (int i = 0; i < p; i++)
     {
         for (int j = 0; j < q; j++)
@@ -201,30 +231,40 @@ void SIMDMatrixes::Dijk(double** A, double** B, int i, int j, int k) {
             }
         }
     }
+    Tn += ceil((p * q * m) / process_element) * 2 * comparisonTime;
+    averageTime += p * q * m * 2 * comparisonTime;
 }
 
 double SIMDMatrixes::singleConjunction(int i, int j) {
     double result = 1;
     for (int k = 0; k < m; k++) {
         result *= F[i][j][k];
+        numberOfMultiplications++;
     }
+    numberOfMultiplications--;
     return result;
 }
 
 double SIMDMatrixes::singleDisjunction(int i, int j) {
     double result = 1;
     for (int k = 0; k < m; k++) {
+        numberOfMultiplications++;
+        numberOfSubtractions++;
         result *= 1 - D[i][j][k];
     }
-    
+    numberOfMultiplications--;
+    numberOfSubtractions++;
     return 1 - result;
 }
 
 double SIMDMatrixes::multiplication(int i, int j) {
     double res, half;
-    half = (singleConjunction(i, j) + singleDisjunction(i, j) - 1.);
-    if (half > 0.) res = half;
-    else res = 0.;
+    numberOfAdditions++;
+    numberOfSubtractions++;
+    numberOfComparisons += 2;
+    half = (singleConjunction(i, j) + singleDisjunction(i, j) - 1,0);
+    if (half > 0) res = half;
+    else res = 0;
  
     return res;
 }
@@ -234,20 +274,27 @@ double SIMDMatrixes::contraction(int first,int second) {
     while (min((1 - first), delta) > second)
     {
         delta -= 1;
+        numberOfComparisons += 2;
+        numberOfSubtractions += 2;
 
     }
     return delta;
 
 }
 
-double SIMDMatrixes::uncontraction(double** A, double** B, int i, int k, int j) {
+double SIMDMatrixes::uncontraction(int i, int k, int j) {
     double res;
-    if ((1 - B[k][j]) > A[i][k]) res = (1 - B[k][j]);
+    if ((1 - B[k][j]) > A[i][k]) {
+        res = (1 - B[k][j]);
+        numberOfComparisons += 2;
+        numberOfSubtractions += 2;
+    }
     else res = A[i][k];
   
     return res;
 }
 
 double SIMDMatrixes::conjunction_self(int first,int second) {
+    numberOfComparisons += 2;
     return min(first, second);
 }

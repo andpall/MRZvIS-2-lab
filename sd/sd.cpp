@@ -16,7 +16,7 @@ int main() {
         SIMDMatrixes lab2;
         
         lab2.set_input_elements_of_massiv();
-        lab2.filling_matrixs();
+
 
 }
 
